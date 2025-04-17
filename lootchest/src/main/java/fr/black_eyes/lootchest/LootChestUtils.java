@@ -225,7 +225,7 @@ public class LootChestUtils  {
 	 * @param radius the radius
 	 * @return a random Location around the startLocation
 	 */
-	public static Location getRandomLocation(Location startLocation, int radius) {
+	/*public static Location getRandomLocation(Location startLocation, int radius) {
 		Location center = startLocation.clone();
 		center.setX(randomInt(radius)+center.getX());
 		center.setZ(randomInt(radius)+center.getZ());
@@ -234,7 +234,40 @@ public class LootChestUtils  {
 			center.setY(center.getWorld().getHighestBlockYAt(center)+(double)1);
 		}
 		return center;
-	}
+	}*/
+
+	public static Location getRandomLocation(Location startLocation, int radius) {
+        Location center = startLocation.clone();
+    
+        // Randomize X and Z within the square area (both directions)
+        center.setX(center.getX() + LootChestUtils.randomInt(radius * 2) - radius);
+        center.setZ(center.getZ() + LootChestUtils.randomInt(radius * 2) - radius);
+    
+        World world = center.getWorld();
+        int minY = world.getMinHeight(); // Can also use a higher value to avoid caves
+        int maxY = world.getHighestBlockYAt(center);
+    
+        // Look for valid air blocks that have solid ground beneath
+        List<Integer> validYLevels = new ArrayList<>();
+        for (int y = minY + 1; y <= maxY; y++) {
+            Block block = world.getBlockAt(center.getBlockX(), y, center.getBlockZ());
+            Block below = world.getBlockAt(center.getBlockX(), y - 1, center.getBlockZ());
+    
+            if (block.getType() == Material.AIR && below.getType().isSolid()) {
+                validYLevels.add(y);
+            }
+        }
+    
+        if (validYLevels.isEmpty()) {
+            // Fallback to placing chest one block above highest ground
+            center.setY(maxY + 1);
+        } else {
+            int randomY = validYLevels.get(LootChestUtils.randomInt(validYLevels.size()));
+            center.setY(randomY);
+        }
+    
+        return center;
+    }
 	
 	/**
 	 * Checks if location is outside border (thanks spigot forum)
